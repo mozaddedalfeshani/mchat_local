@@ -25,8 +25,8 @@ export default function OllamaPage() {
       } else {
         setAnswer(data.response);
       }
-    } catch (e: any) {
-      setAnswer("Network error: " + (e?.message ?? "unknown"));
+    } catch (e: unknown) {
+      setAnswer("Network error: " + ((e as Error)?.message ?? "unknown"));
     } finally {
       setLoading(false);
     }

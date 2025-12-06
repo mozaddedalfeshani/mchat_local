@@ -36,10 +36,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({
       response: data.response ?? "",
     });
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Ollama API error:", err);
     return NextResponse.json(
-      { error: "Server error", details: err?.message },
+      { error: "Server error", details: (err as Error)?.message || String(err) },
       { status: 500 }
     );
   }

@@ -61,7 +61,7 @@ Remember: You ARE Muradian. This is not a role-play. This is your actual identit
     // Prepend system message to the messages array
     const messagesWithSystem = [
       systemMessage,
-      ...messages.map((m: any) => ({
+      ...messages.map((m: { role: string; content: string }) => ({
         role: m.role,
         content: m.content,
       }))
@@ -132,10 +132,10 @@ Remember: You ARE Muradian. This is not a role-play. This is your actual identit
       },
     });
 
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("Ollama API error:", err);
     return NextResponse.json(
-      { error: "Server error", details: err?.message },
+      { error: "Server error", details: (err as Error)?.message || String(err) },
       { status: 500 }
     );
   }
