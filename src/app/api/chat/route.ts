@@ -4,7 +4,8 @@ const OLLAMA_URL = "http://localhost:11434";
 
 export async function POST(req: NextRequest) {
   try {
-    const { messages } = await req.json();
+    const body = await req.json();
+    const { messages, ollamaUrl } = body;
 
     if (!messages || !Array.isArray(messages)) {
       return NextResponse.json(
@@ -67,7 +68,10 @@ Remember: You ARE Muradian. This is not a role-play. This is your actual identit
       }))
     ];
 
-    const response = await fetch(`${OLLAMA_URL}/api/chat`, {
+    // Use provided Ollama URL or fallback to default
+    const targetUrl = ollamaUrl || OLLAMA_URL;
+
+    const response = await fetch(`${targetUrl}/api/chat`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({

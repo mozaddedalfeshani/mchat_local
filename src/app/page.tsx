@@ -6,12 +6,13 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeHighlight from 'rehype-highlight';
 import 'highlight.js/styles/github-dark.css';
-import { Send, Bot, User, Loader2, Copy, Check, Sparkles } from 'lucide-react';
+import { Send, Bot, User, Loader2, Copy, Check, Sparkles, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { motion, AnimatePresence } from 'framer-motion';
+import { SettingsModal } from '@/components/settings-modal';
 
 type Message = {
   id: string;
@@ -25,8 +26,23 @@ export default function Chat() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [ollamaUrl, setOllamaUrl] = useState('http://localhost:11434');
   const scrollAreaRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Load settings from localStorage
+  useEffect(() => {
+    const savedUrl = localStorage.getItem('ollama_url');
+    if (savedUrl) {
+      setOllamaUrl(savedUrl);
+    }
+  }, []);
+
+  const handleSaveSettings = (url: string) => {
+    setOllamaUrl(url);
+    localStorage.setItem('ollama_url', url);
+  };
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -63,6 +79,7 @@ export default function Chat() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           messages: [...messages, userMessage].map(m => ({ role: m.role, content: m.content })),
+          ollamaUrl, // Pass the configured URL
         }),
       });
 
@@ -91,7 +108,7 @@ export default function Chat() {
       setMessages(prev => [...prev, { 
         id: Date.now().toString(), 
         role: 'assistant', 
-        content: 'Sorry, something went wrong. Please try again.' 
+        content: 'দুঃখিত, কিছু ভুল হয়েছে। অনুগ্রহ করে আবার চেষ্টা করুন। (Sorry, something went wrong.)' 
       }]);
     } finally {
       setIsLoading(false);
@@ -144,6 +161,14 @@ export default function Chat() {
 
   return (
     <div className="flex flex-col h-screen bg-neutral-950 text-neutral-100 font-sans selection:bg-blue-500/30 relative overflow-hidden">
+      {/* Settings Modal */}
+      <SettingsModal 
+        isOpen={isSettingsOpen} 
+        onClose={() => setIsSettingsOpen(false)} 
+        onSave={handleSaveSettings}
+        initialUrl={ollamaUrl}
+      />
+
       {/* Background Image & Effects */}
       <div className="fixed inset-0 z-0 pointer-events-none">
         <div 
@@ -166,17 +191,25 @@ export default function Chat() {
           </div>
           <div>
             <h1 className="text-xl font-bold tracking-tight bg-gradient-to-r from-white via-blue-100 to-neutral-400 bg-clip-text text-transparent drop-shadow-sm">
-              Muradian AI
+              মুরাদিয়ান এআই (Muradian AI)
             </h1>
             <div className="flex items-center gap-2 mt-0.5">
               <span className="relative flex h-2 w-2">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
                 <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.6)]"></span>
               </span>
-              <p className="text-[10px] font-medium text-blue-200/70 uppercase tracking-widest">Online</p>
+              <p className="text-[10px] font-medium text-blue-200/70 uppercase tracking-widest">অনলাইন (Online)</p>
             </div>
           </div>
         </div>
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          onClick={() => setIsSettingsOpen(true)}
+          className="text-neutral-400 hover:text-white hover:bg-white/10 rounded-xl"
+        >
+          <Settings className="w-5 h-5" />
+        </Button>
       </header>
 
       {/* Chat Area */}
@@ -198,11 +231,11 @@ export default function Chat() {
                 </div>
                 <div className="space-y-3 max-w-lg relative">
                   <div className="absolute -inset-4 bg-black/20 blur-xl rounded-full -z-10" />
-                  <h2 className="text-4xl font-bold text-white tracking-tight drop-shadow-lg">Welcome to Muradian</h2>
+                  <h2 className="text-4xl font-bold text-white tracking-tight drop-shadow-lg">মুরাদিয়ান এআই-তে স্বাগতম</h2>
                   <p className="text-lg text-blue-100/70 font-light leading-relaxed">
-                    Your advanced AI companion for coding, creativity, and analysis.
+                    আমি আপনাকে কোডিং, বিশ্লেষণ এবং সৃজনশীল কাজে সাহায্য করতে এখানে আছি।
                     <br />
-                    <span className="text-sm opacity-60 mt-2 block">Ask me anything in Bangla or English.</span>
+                    <span className="text-sm opacity-60 mt-2 block">বাংলা বা ইংরেজিতে আমাকে যা খুশি জিজ্ঞাসা করুন।</span>
                   </p>
                 </div>
               </motion.div>
@@ -281,7 +314,7 @@ export default function Chat() {
                  </Avatar>
                  <div className="flex items-center gap-3 text-blue-200/70 text-sm px-6 py-4 bg-neutral-900/40 rounded-[2rem] rounded-tl-md border border-white/5 backdrop-blur-md shadow-lg">
                    <Loader2 className="w-5 h-5 animate-spin text-blue-400" />
-                   <span className="animate-pulse font-medium tracking-wide">Muradian is thinking...</span>
+                   <span className="animate-pulse font-medium tracking-wide">মুরাদিয়ান ভাবছে... (Thinking...)</span>
                  </div>
                </motion.div>
             )}
@@ -303,7 +336,7 @@ export default function Chat() {
                 ref={textareaRef}
                 className="flex-1 bg-transparent border-0 focus-visible:ring-0 text-white placeholder:text-neutral-400/70 min-h-[56px] max-h-[200px] resize-none py-4 px-6 text-lg leading-relaxed"
                 value={input}
-                placeholder="Message Muradian..."
+                placeholder="মুরাদিয়ানকে মেসেজ করুন... (Message Muradian...)"
                 onChange={handleInputChange}
                 onKeyDown={(e) => {
                   if (e.key === 'Enter' && !e.shiftKey) {
@@ -324,7 +357,7 @@ export default function Chat() {
             </form>
           </div>
           <p className="text-center text-[11px] text-neutral-500/60 mt-4 font-medium tracking-[0.2em] uppercase">
-            Muradian AI • Powered by Advanced Models
+            মুরাদিয়ান এআই • উন্নত মডেল দ্বারা চালিত (Powered by Advanced Models)
           </p>
         </div>
       </div>
